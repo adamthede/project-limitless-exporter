@@ -1,6 +1,6 @@
 # Project - Limitless Exporter
 
-This project initially began as a clone of the official limitless-api-examples repository.
+This began as a clone of the official Limitless [limitless-api-examples](https://github.com/limitless-ai-inc/limitless-api-examples) repository.
 
 ## 🛳️ Python Script Examples
 
@@ -97,11 +97,6 @@ python analyze_daily_usage.py 2025-02-28
 python analyze_daily_usage.py 2025-03-01 2025-03-10
 ```
 
-### Legacy Examples
-
--   **`export_markdown.py` (Legacy):** This was an initial simple script to print the most recent lifelog's markdown. It has been superseded by `export_day_lifelogs.py` for more robust daily archiving.
--   **Jupyter Notebooks (`notebooks/`):** The `notebooks/chart_usage.ipynb` provides an example of how to visualize usage from the API. The `analyze_daily_usage.py` script offers a more automated and report-oriented approach using local JSON data.
-
 ## Workflow for Archiving & Analysis
 
 For a detailed guide on setting up your environment, daily syncing, backfilling data, and using these scripts in a cohesive workflow, please see the **[LIFELOG_ARCHIVING_WORKFLOW.md](LIFELOG_ARCHIVING_WORKFLOW.md)** document.
@@ -112,4 +107,4 @@ For more information on the API, see the [documentation](https://limitless.ai/de
 
 ## 🛟 Support
 
-If you need help, join our [Slack community](https://www.limitless.ai/community), follow us on [X/Twitter](https://twitter.com/limitlessai), or [email us](mailto:support@limitless.ai).
+If you need help, I encourage you to join the [Slack community](https://www.limitless.ai/community).
