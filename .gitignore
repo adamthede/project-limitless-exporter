@@ -1,0 +1,7 @@
+.venv/
+.env
+.env.local
+.specstory/
+workspace.json
+exports/*
+python/__pycache__/
