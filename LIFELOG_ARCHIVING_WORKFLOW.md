@@ -53,54 +53,51 @@ All scripts are located in the `python/` directory. All exported data and report
 *   **`batch_process_days.py`**:
     *   Orchestrates `export_day_lifelogs.py` and then `summarize_day.py` for a range of dates.
     *   Includes its own batch-level retry logic.
+    *   If run without date arguments, it will automatically process days from the day after the last processed lifelog up to yesterday.
 *   **`batch_export_contents_json.py`**:
     *   Orchestrates `export_day_contents_json.py` for a range of dates.
     *   Useful for backfilling the JSON data needed for analytics.
     *   Includes its own batch-level retry logic.
+    *   If run without date arguments, it will automatically process days from the day after the last exported JSON content up to yesterday.
 *   **`analyze_daily_usage.py`**:
     *   Processes `exports/contents/YYYY-MM-DD-contents.json` files for a single date or a date range.
     *   For each day, generates:
         *   Detailed usage statistics printed to the console.
         *   A timeline chart image: `exports/analytics/YYYY-MM-DD-usage-timeline.png`.
         *   A markdown report: `exports/analytics/YYYY-MM-DD-analytics.md` (includes stats and chart).
+    *   If run without date arguments, it automatically determines the range: starts after the last analytics report (or earliest content if no reports) and processes up to yesterday or the latest available content data, whichever is earlier.
 
 ## 4. Recommended Workflow for Archiving & Analysis
 
 This workflow aims to first secure your raw data and summaries, then optionally generate structured data for deeper analysis.
 
 **Step 1: Daily Sync (Lifelogs & Summaries)**
-Run `batch_process_days.py` daily to fetch the *previous* day's lifelogs and generate its summary. This ensures data for the day is complete.
+Run `batch_process_days.py` daily. When run without date arguments, it will automatically fetch lifelogs and generate summaries for any days that were missed since the last run, up to and including the previous day. This is the recommended method for daily catch-up.
 
 *   **Command (run from `python/` directory):**
     ```bash
-    # Example: Run on May 11th to process May 10th data
-    python batch_process_days.py YYYY-MM-DD YYYY-MM-DD
-    # (replace YYYY-MM-DD with yesterday's date)
+    python batch_process_days.py
     ```
 
 **Step 2 (Optional but Recommended for Analytics): Daily Sync (Structured JSON Contents)**
-After successfully completing Step 1, run `batch_export_contents_json.py` for the same previous day to get the structured JSON data.
+After successfully completing Step 1, run `batch_export_contents_json.py` without arguments. It will automatically export structured JSON data for any days processed in Step 1 that don't yet have corresponding JSON files, up to and including the previous day.
 
 *   **Command (run from `python/` directory):**
     ```bash
-    # Example: Run on May 11th to process May 10th data
-    python batch_export_contents_json.py YYYY-MM-DD YYYY-MM-DD
-    # (replace YYYY-MM-DD with yesterday's date)
+    python batch_export_contents_json.py
     ```
 
 **Step 3 (Optional): Daily Usage Analysis**
-After successfully completing Step 2, run `analyze_daily_usage.py` for the previous day to generate the analytics report.
+After successfully completing Step 2, run `analyze_daily_usage.py` without arguments. It will automatically generate analytics reports for any days that have content data but are missing an analytics report, up to the latest available content or yesterday.
 
 *   **Command (run from `python/` directory):**
     ```bash
-    # Example: Run on May 11th to process May 10th data
-    python analyze_daily_usage.py YYYY-MM-DD
-    # (replace YYYY-MM-DD with yesterday's date)
+    python analyze_daily_usage.py
     ```
 
 ## 5. Backfilling Past Data
 
-To backfill data for a range of past dates:
+To backfill data for a specific range of past dates (e.g., if you're just starting or missed a large period), you can still provide explicit `START_DATE` and `END_DATE` arguments to the batch scripts:
 
 **A. Lifelogs & Summaries:**
 Use `batch_process_days.py`.

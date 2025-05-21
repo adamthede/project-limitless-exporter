@@ -77,6 +77,8 @@ The `batch_process_days.py` script automates the process of exporting daily life
 **Usage:**
 ```bash
 python batch_process_days.py START_DATE END_DATE [OPTIONS]
+# Or run without dates to process missing days up to yesterday:
+python batch_process_days.py [OPTIONS]
 ```
 **Example (process January 2025):**
 ```bash
@@ -91,6 +93,8 @@ The `batch_export_contents_json.py` script automates the export of structured JS
 **Usage:**
 ```bash
 python batch_export_contents_json.py START_DATE END_DATE [OPTIONS]
+# Or run without dates to process missing days up to yesterday:
+python batch_export_contents_json.py [OPTIONS]
 ```
 **Example (export contents for February 2025):**
 ```bash
@@ -115,6 +119,12 @@ python analyze_daily_usage.py YYYY-MM-DD
 ```bash
 python analyze_daily_usage.py START_DATE END_DATE
 ```
+**Usage (automatic date range - recommended for daily catch-up):**
+```bash
+python analyze_daily_usage.py
+```
+If run without date arguments, `analyze_daily_usage.py` will automatically determine the range of days to process. It will start from the day after the last generated analytics report (or the earliest available content if no reports exist) and process up to yesterday or the latest available content data, whichever is earlier.
+
 **Example:**
 ```bash
 python analyze_daily_usage.py 2025-02-28
