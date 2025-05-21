@@ -4,6 +4,33 @@ import time
 import random
 import argparse
 from datetime import date, timedelta, datetime
+import re
+
+def get_last_exported_contents_date(contents_dir: str) -> date | None:
+    """
+    Scans the contents directory to find the latest date from filenames
+    matching YYYY-MM-DD-contents.json.
+    Returns the latest date object or None if no such files are found.
+    """
+    latest_date = None
+    date_pattern = re.compile(r"(\d{4}-\d{2}-\d{2})-contents\.json")
+    try:
+        if not os.path.exists(contents_dir):
+            return None
+        for filename in os.listdir(contents_dir):
+            match = date_pattern.fullmatch(filename)
+            if match:
+                date_str = match.group(1)
+                try:
+                    current_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                    if latest_date is None or current_date > latest_date:
+                        latest_date = current_date
+                except ValueError:
+                    continue
+    except Exception as e:
+        print(f"Error scanning contents directory {contents_dir} for last exported date: {e}")
+        return None
+    return latest_date
 
 def daterange(start_date, end_date):
     for n in range(int((end_date - start_date).days) + 1):
@@ -69,43 +96,60 @@ def main():
     today = date.today()
     yesterday = today - timedelta(days=1)
 
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(script_dir)
+    contents_output_dir = os.path.join(project_root, "exports", "contents")
+    os.makedirs(contents_output_dir, exist_ok=True)
+
     start_dt = None
     end_dt = None
 
-    if args.start_date is None:
-        start_dt = yesterday
-        if args.end_date is None:
+    if args.start_date is None and args.end_date is None:
+        print("No start or end date provided. Attempting to determine date range based on last exported contents day...")
+        last_exported_dt = get_last_exported_contents_date(contents_output_dir)
+        if last_exported_dt:
+            print(f"Last successfully exported contents date found in '{contents_output_dir}': {last_exported_dt.strftime('%Y-%m-%d')}")
+            start_dt = last_exported_dt + timedelta(days=1)
             end_dt = yesterday
-        else:
-            try:
-                end_dt = datetime.strptime(args.end_date, "%Y-%m-%d").date()
-            except ValueError:
-                print(f"Error: Invalid end_date format ({args.end_date}). Please use YYYY-MM-DD.")
+            if start_dt > end_dt:
+                print(f"Contents data is already up to date through {last_exported_dt.strftime('%Y-%m-%d')}. Yesterday was {yesterday.strftime('%Y-%m-%d')}. Nothing new to export.")
                 return
-    else: # start_date was provided
+        else:
+            print(f"No previously exported contents found in '{contents_output_dir}'. Defaulting to process yesterday's data only ({yesterday.strftime('%Y-%m-%d')}).")
+            start_dt = yesterday
+            end_dt = yesterday
+    elif args.start_date is None:
+        print(f"Start date not provided. Defaulting start date to yesterday: {yesterday.strftime('%Y-%m-%d')}")
+        start_dt = yesterday
+        try:
+            end_dt = datetime.strptime(args.end_date, "%Y-%m-%d").date()
+        except ValueError:
+            print(f"Error: Invalid end_date format ('{args.end_date}'). Please use YYYY-MM-DD.")
+            return
+    elif args.end_date is None:
         try:
             start_dt = datetime.strptime(args.start_date, "%Y-%m-%d").date()
         except ValueError:
-            print(f"Error: Invalid start_date format ({args.start_date}). Please use YYYY-MM-DD.")
+            print(f"Error: Invalid start_date format ('{args.start_date}'). Please use YYYY-MM-DD.")
             return
-
-        if args.end_date is None:
-            end_dt = start_dt
-        else:
-            try:
-                end_dt = datetime.strptime(args.end_date, "%Y-%m-%d").date()
-            except ValueError:
-                print(f"Error: Invalid end_date format ({args.end_date}). Please use YYYY-MM-DD.")
-                return
+        end_dt = start_dt
+        print(f"End date not provided. Defaulting end date to start date: {end_dt.strftime('%Y-%m-%d')}")
+    else:
+        try:
+            start_dt = datetime.strptime(args.start_date, "%Y-%m-%d").date()
+            end_dt = datetime.strptime(args.end_date, "%Y-%m-%d").date()
+        except ValueError:
+            print(f"Error: Invalid date format for start_date ('{args.start_date}') or end_date ('{args.end_date}'). Please use YYYY-MM-DD.")
+            return
 
     effective_start_date_str = start_dt.strftime("%Y-%m-%d")
     effective_end_date_str = end_dt.strftime("%Y-%m-%d")
 
     if end_dt < start_dt:
-        print("Error: End date cannot be before start date.")
+        print(f"Error: Calculated end date ({effective_end_date_str}) is before start date ({effective_start_date_str}). Cannot process.")
         return
 
-    script_dir = os.path.dirname(os.path.abspath(__file__)) # Should be the python/ directory
+    script_dir = os.path.dirname(os.path.abspath(__file__)) # Moved up
     export_contents_script_path = os.path.join(script_dir, "export_day_contents_json.py")
 
     # The export_day_contents_json.py script handles its own output directory creation (exports/contents/)

@@ -2,6 +2,31 @@
 
 This began as a clone of the official Limitless [limitless-api-examples](https://github.com/limitless-ai-inc/limitless-api-examples) repository.
 
+## 🚀 Getting Started
+
+To get the Python scripts in this repository running, you'll first need to set up a virtual environment and install the necessary dependencies.
+
+1.  **Navigate to the Python directory:**
+    ```bash
+    cd python
+    ```
+
+2.  **Create and activate a virtual environment:**
+    It's recommended to create the virtual environment within the `python` directory.
+    ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+    *(On Windows, the activation command is `venv\Scripts\activate`)*
+
+3.  **Install requirements:**
+    With the virtual environment activated and while still in the `python` directory:
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+Once these steps are complete, you'll be ready to run the example scripts. Remember to activate your virtual environment (`source venv/bin/activate` from within the `python` directory) each time you start a new terminal session to work with these scripts.
+
 ## 🛳️ Python Script Examples
 
 All commands below assume you are in the `python/` directory with your virtual environment activated and `.env` file configured.
