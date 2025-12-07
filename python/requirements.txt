@@ -5,3 +5,4 @@ requests==2.32.3
 tzlocal==5.0.1
 pandas
 matplotlib
+google-genai>=0.3.0

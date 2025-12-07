@@ -1,7 +1,34 @@
+# Python virtual environment
 .venv/
+venv/
+*.pyc
+__pycache__/
+python/__pycache__/
+
+# Environment variables (contains API keys)
 .env
 .env.local
-.specstory/
+.env.*.local
+
+# Personal data exports (29GB+ of personal lifelog data)
+exports/
+*.ogg
+*.wav
+*.mp3
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
 workspace.json
-exports/*
-python/__pycache__/
+
+# Project history
+.specstory/
+
+# Temporary files
+*.log
+*.tmp
+.cache/

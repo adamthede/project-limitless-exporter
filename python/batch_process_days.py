@@ -4,9 +4,10 @@ import time
 import random
 import argparse
 from datetime import date, timedelta, datetime
+from typing import Optional
 import re
 
-def get_last_processed_date(lifelogs_dir: str) -> date | None:
+def get_last_processed_date(lifelogs_dir: str) -> Optional[date]:
     """
     Scans the lifelogs directory to find the latest date from filenames
     matching YYYY-MM-DD-lifelogs.md.
@@ -52,7 +53,8 @@ def process_single_day(
     export_page_limit: int,
     export_max_retries: int,
     export_initial_backoff: float,
-    export_max_backoff: float
+    export_max_backoff: float,
+    skip_summary: bool = False
 ) -> bool:
     """
     Processes a single day: exports lifelogs and then generates a summary.
@@ -107,7 +109,11 @@ def process_single_day(
         # Similar to above, if the file is empty, nothing to summarize.
         return True
 
-    # Step 2: Generate summary for the current date
+    # Step 2: Generate summary for the current date (if not skipped)
+    if skip_summary:
+        print(f"Skipping summary generation for {date_str} (--skip-summary flag provided).")
+        return True
+
     print(f"Running summarize_day.py for {lifelog_file_path}...")
     summarize_command = ["python", summarize_script_path, lifelog_file_path, "--stream"]
 
@@ -153,6 +159,9 @@ def main():
     parser.add_argument("--export_max_retries", type=int, default=5, help="Max retries for export_day_lifelogs.py (default: 5).")
     parser.add_argument("--export_initial_backoff", type=float, default=2.0, help="Initial backoff for export_day_lifelogs.py (default: 2.0).")
     parser.add_argument("--export_max_backoff", type=float, default=60.0, help="Max backoff for export_day_lifelogs.py (default: 60.0).")
+
+    # Skip summary option
+    parser.add_argument("--skip-summary", action="store_true", help="Skip the summary generation step (only export lifelogs).")
 
     args = parser.parse_args()
 
@@ -251,7 +260,8 @@ def main():
                 args.export_page_limit,
                 args.export_max_retries,
                 args.export_initial_backoff,
-                args.export_max_backoff
+                args.export_max_backoff,
+                args.skip_summary
             ):
                 day_processed_successfully = True
                 break  # Success for this day, move to next date

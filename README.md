@@ -1,145 +1,218 @@
-# Project - Limitless Exporter
+# Limitless Data Exporter
 
-This began as a clone of the official Limitless [limitless-api-examples](https://github.com/limitless-ai-inc/limitless-api-examples) repository.
+A comprehensive toolkit for exporting, archiving, and analyzing your Limitless AI data before account deletion.
 
-## 🚀 Getting Started
+> **Important Context:** This project was created to help Limitless users export their complete data before the Meta (Facebook) acquisition. On December 6, 2025, Limitless AI announced its acquisition by Meta, raising privacy concerns about the transfer of personal voice recordings and transcripts. This toolkit enables you to maintain complete local control of your data.
 
-To get the Python scripts in this repository running, you'll first need to set up a virtual environment and install the necessary dependencies.
+## What This Tool Does
 
-1.  **Navigate to the Python directory:**
-    ```bash
-    cd python
-    ```
+- **Export lifelogs** - Download all conversation transcripts by day or date range
+- **Archive chats** - Backup Daily Insights, summaries, and all conversations
+- **Download audio** - Export raw audio recordings from your Pendant
+- **Generate analytics** - Create usage reports and visualizations
+- **Incremental sync** - Keep your archive up to date with new data
+- **Obsidian-ready** - Organized exports compatible with Obsidian note-taking
 
-2.  **Create and activate a virtual environment:**
-    It's recommended to create the virtual environment within the `python` directory.
-    ```bash
-    python3 -m venv venv
-    source venv/bin/activate
-    ```
-    *(On Windows, the activation command is `venv\Scripts\activate`)*
+## Why You Might Need This
 
-3.  **Install requirements:**
-    With the virtual environment activated and while still in the `python` directory:
-    ```bash
-    pip install -r requirements.txt
-    ```
+1. **Privacy concerns** - Keep control of your personal data before it transfers to Meta
+2. **Data preservation** - Maintain access to your lifelogs regardless of service changes
+3. **Account deletion** - Required if you plan to delete your Limitless account
+4. **Backup strategy** - Good practice to maintain local copies of important data
 
-Once these steps are complete, you'll be ready to run the example scripts. Remember to activate your virtual environment (`source venv/bin/activate` from within the `python` directory) each time you start a new terminal session to work with these scripts.
+## Quick Start
 
-## 🛳️ Python Script Examples
+### 1. Setup
 
-All commands below assume you are in the `python/` directory with your virtual environment activated and `.env` file configured.
-
-### 1. Exporting Daily Lifelogs (Raw Markdown)
-
-The `export_day_lifelogs.py` script fetches all lifelog entries for a specific date, handles API pagination and retries, and saves the concatenated raw markdown to `exports/lifelogs/YYYY-MM-DD-lifelogs.md`.
-
-**Usage:**
 ```bash
-python export_day_lifelogs.py YYYY-MM-DD
-```
-**Example:**
-```bash
-python export_day_lifelogs.py 2025-02-28
+cd python
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 ```
 
-### 2. Generating Daily Summaries
+### 2. Configure API Access
 
-The `summarize_day.py` script takes a previously exported daily lifelog markdown file and uses OpenAI (GPT-4.1-Nano by default) to generate a factual, journal-style summary. The summary is saved to `exports/summaries/YYYY-MM-DD-summary.md`.
+Copy the example environment file and add your API key:
 
-**Usage:**
 ```bash
-python summarize_day.py path/to/your/YYYY-MM-DD-lifelogs.md
-```
-**Example (after running export_day_lifelogs.py):**
-```bash
-python summarize_day.py ../exports/lifelogs/2025-02-28-lifelogs.md
+cp .env.example .env
+# Edit .env and add your Limitless API key
+# Get it from: https://www.limitless.ai/developers
 ```
 
-### 3. Exporting Daily Lifelogs (Structured JSON)
+### 3. Sync Everything
 
-The `export_day_contents_json.py` script fetches all lifelog entries for a specific date, including their full markdown and the structured `contents` array (which contains individual text segments, timestamps, speaker info, etc.). This is saved to `exports/contents/YYYY-MM-DD-contents.json`. This JSON format is ideal for detailed programmatic analysis.
+Run the master sync script to download all your data:
 
-**Usage:**
 ```bash
-python export_day_contents_json.py YYYY-MM-DD
-```
-**Example:**
-```bash
-python export_day_contents_json.py 2025-02-28
-```
+# Sync all missing data up to yesterday
+python sync_everything.py
 
-### 4. Batch Processing: Daily Exports & Summaries
+# Or sync a specific month
+python sync_everything.py --month 2025-11
 
-The `batch_process_days.py` script automates the process of exporting daily lifelogs (using `export_day_lifelogs.py`) and then generating summaries (using `summarize_day.py`) for a specified range of dates. It includes robust retry mechanisms for each step and for each day.
-
-**Usage:**
-```bash
-python batch_process_days.py START_DATE END_DATE [OPTIONS]
-# Or run without dates to process missing days up to yesterday:
-python batch_process_days.py [OPTIONS]
-```
-**Example (process January 2025):**
-```bash
-python batch_process_days.py 2025-01-01 2025-01-31
-```
-Use `--help` to see available options for retry behavior and export parameters.
-
-### 5. Batch Processing: Daily Structured JSON Exports
-
-The `batch_export_contents_json.py` script automates the export of structured JSON data (using `export_day_contents_json.py`) for a specified range of dates. This is useful for backfilling the `exports/contents/` directory needed for usage analytics.
-
-**Usage:**
-```bash
-python batch_export_contents_json.py START_DATE END_DATE [OPTIONS]
-# Or run without dates to process missing days up to yesterday:
-python batch_export_contents_json.py [OPTIONS]
-```
-**Example (export contents for February 2025):**
-```bash
-python batch_export_contents_json.py 2025-02-01 2025-02-28
-```
-Use `--help` to see available options.
-
-### 6. Analyzing Daily Usage & Generating Reports
-
-The `analyze_daily_usage.py` script processes the structured JSON data from `exports/contents/` for a given date or date range. For each day, it:
--   Prints detailed usage statistics to the console.
--   Generates and saves a visual timeline chart of recording sessions to `exports/analytics/YYYY-MM-DD-usage-timeline.png`.
--   Creates a comprehensive markdown report (`exports/analytics/YYYY-MM-DD-analytics.md`) containing all statistics and embedding the timeline chart.
-
-**Prerequisite:** Ensure the corresponding `YYYY-MM-DD-contents.json` files exist in `exports/contents/` for the dates you want to analyze.
-
-**Usage (single day):**
-```bash
-python analyze_daily_usage.py YYYY-MM-DD
-```
-**Usage (date range):**
-```bash
-python analyze_daily_usage.py START_DATE END_DATE
-```
-**Usage (automatic date range - recommended for daily catch-up):**
-```bash
-python analyze_daily_usage.py
-```
-If run without date arguments, `analyze_daily_usage.py` will automatically determine the range of days to process. It will start from the day after the last generated analytics report (or the earliest available content if no reports exist) and process up to yesterday or the latest available content data, whichever is earlier.
-
-**Example:**
-```bash
-python analyze_daily_usage.py 2025-02-28
-# or for a range
-python analyze_daily_usage.py 2025-03-01 2025-03-10
+# Dry run to see what would be synced
+python sync_everything.py --dry-run
 ```
 
-## Workflow for Archiving & Analysis
+This single command will:
+1. ✅ Export missing lifelogs (transcripts)
+2. ✅ Export structured JSON data
+3. ✅ Sync all chats and conversations
+4. ✅ Download audio recordings
+5. ✅ Generate daily analytics
+6. ✅ Generate monthly analytics
 
-For a detailed guide on setting up your environment, daily syncing, backfilling data, and using these scripts in a cohesive workflow, please see the **[LIFELOG_ARCHIVING_WORKFLOW.md](LIFELOG_ARCHIVING_WORKFLOW.md)** document.
+**All in the correct order with dependency handling.**
 
-## ℹ️ More information
+## Archive Structure
 
-For more information on the API, see the [documentation](https://limitless.ai/developers/docs/api).
+After syncing, your data will be organized in the `exports/` directory:
 
-## 🛟 Support
+```
+exports/
+  lifelogs/              # Daily transcripts (markdown)
+    2025-03-01-lifelogs.md
+    2025-03-02-lifelogs.md
+    ...
 
-If you need help, I encourage you to join the [Slack community](https://www.limitless.ai/community).
+  contents/              # Structured JSON data
+    2025-03-01-contents.json
+    ...
+
+  insights/              # Limitless-generated Daily Insights
+    2025-03/
+      2025-03-01-daily-insights.md
+      ...
+
+  daily-summaries/       # Your custom daily summaries
+    2025-03/
+      ...
+
+  chats/                 # All other conversations
+    2025-03/
+      ...
+
+  audio/                 # Raw audio recordings (.ogg)
+    2025-03/
+      2025-03-01/
+        2025-03-01-morning-0700.ogg
+        ...
+
+  analytics/             # Usage reports and charts
+    2025-03-01-analytics.md
+    2025-03-01-usage-timeline.png
+    ...
+```
+
+## Documentation
+
+- **[docs/QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md)** - Quick command reference
+- **[docs/COMPLETE_GUIDE.md](docs/COMPLETE_GUIDE.md)** - Comprehensive guide covering everything
+- **[docs/SYNC_GUIDE.md](docs/SYNC_GUIDE.md)** - Complete sync workflow and automation
+- **[docs/OBSIDIAN_GUIDE.md](docs/OBSIDIAN_GUIDE.md)** - Using exports with Obsidian
+- **[docs/DATA_DELETION_PROCESS.md](docs/DATA_DELETION_PROCESS.md)** - How to delete data from Limitless servers
+
+### Specific Topics
+
+- **[docs/CHAT_ANALYSIS_GUIDE.md](docs/CHAT_ANALYSIS_GUIDE.md)** - Analyzing chat patterns
+- **[docs/DAILY_INSIGHTS_GUIDE.md](docs/DAILY_INSIGHTS_GUIDE.md)** - Daily Insights export
+- **[docs/EXPLORING_CHATS_ENDPOINT.md](docs/EXPLORING_CHATS_ENDPOINT.md)** - API details
+- **[docs/LIFELOG_ARCHIVING_WORKFLOW.md](docs/LIFELOG_ARCHIVING_WORKFLOW.md)** - Complete workflow
+
+## Key Features
+
+### Smart Incremental Sync
+Only downloads new data, making regular backups fast and efficient.
+
+### Complete Data Coverage
+- Lifelogs (transcripts)
+- Audio recordings (Ogg Opus format)
+- All chat conversations
+- Daily Insights
+- User-created prompts and responses
+
+### Export Formats
+- **Markdown** - Human-readable, Obsidian-compatible
+- **JSON** - Structured data for analysis
+- **Audio** - Raw Ogg Opus recordings
+- **PNG** - Usage timeline visualizations
+
+### Data Organization
+Files are automatically organized by:
+- Date (YYYY-MM-DD format)
+- Type (insights, summaries, chats)
+- Month subdirectories for better navigation
+
+## Common Commands
+
+```bash
+# Sync everything (recommended)
+python sync_everything.py
+
+# Sync specific month
+python sync_everything.py --month 2025-11
+
+# Export lifelogs for a single day
+python export_day_lifelogs.py 2025-03-01
+
+# Download audio for a day
+python batch_export_audio.py 2025-03-01
+
+# Sync all chats
+python sync_all_chats.py
+
+# Generate analytics
+python analyze_daily_usage.py 2025-03-01
+```
+
+## Data Deletion
+
+If you want to delete your data from Limitless servers after exporting:
+
+1. **Backup first** - Run `sync_everything.py` to ensure you have everything
+2. **Verify backup** - Check that all data exported successfully
+3. **Read the guide** - See [docs/DATA_DELETION_PROCESS.md](docs/DATA_DELETION_PROCESS.md)
+4. **Run deletion script** - Use `python delete_all_data.py` (with caution)
+5. **Send formal request** - Email support@limitless.ai for complete deletion
+
+**Warning:** API-based deletion has limitations. A formal GDPR/CCPA deletion request is recommended for complete removal.
+
+## Privacy & Security
+
+- **Your API key** - Never commit `.env` file to version control
+- **Personal data** - The `exports/` directory contains all your personal data and is excluded from git
+- **Audio files** - Raw recordings are excluded from git by default
+- **Local-only** - All exports stay on your machine unless you explicitly share them
+
+## Requirements
+
+- Python 3.8+
+- Limitless API key ([get one here](https://www.limitless.ai/developers))
+- Optional: OpenAI API key (for summarization features)
+
+## About This Project
+
+This began as a fork of the official [limitless-api-examples](https://github.com/limitless-ai-inc/limitless-api-examples) repository and was significantly expanded to:
+
+1. Provide comprehensive data export capabilities
+2. Enable users to maintain data sovereignty
+3. Facilitate account deletion while preserving personal records
+4. Support privacy-conscious users concerned about the Meta acquisition
+
+## License
+
+MIT License - See [LICENSE](LICENSE) for details
+
+## Support
+
+- **Limitless API Documentation:** https://limitless.ai/developers/docs/api
+- **Limitless Community:** https://www.limitless.ai/community
+- **Issues:** Please report issues on GitHub
+
+## Disclaimer
+
+This is a community-maintained tool and is not officially affiliated with or endorsed by Limitless AI or Meta. Use at your own discretion. The authors are not responsible for any data loss or issues arising from the use of this software.
+
+Always verify your backups before deleting data from any service.

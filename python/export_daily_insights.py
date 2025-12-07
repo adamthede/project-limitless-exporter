@@ -1,0 +1,220 @@
+#!/usr/bin/env python3
+"""
+Export Daily Insights from the Limitless API /v1/chats endpoint.
+
+This script fetches Daily Insights (the daily digest/summary that Limitless generates)
+for a specific date and saves it as a markdown file.
+
+Usage:
+    python export_daily_insights.py YYYY-MM-DD
+
+Example:
+    python export_daily_insights.py 2025-11-20
+"""
+
+import os
+import sys
+import json
+import requests
+from datetime import datetime, timedelta
+from pathlib import Path
+from dotenv import load_dotenv
+import time
+
+# Load environment variables
+env_path = Path(__file__).parent.parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    load_dotenv()
+
+API_KEY = os.getenv("LIMITLESS_API_KEY")
+API_URL = os.getenv("LIMITLESS_API_URL", "https://api.limitless.ai")
+MAX_RETRIES = 3
+RETRY_DELAY = 5  # seconds
+
+
+def fetch_daily_insights(target_date, max_pages=10):
+    """
+    Fetch Daily Insights for a specific date.
+
+    Args:
+        target_date: Date string in YYYY-MM-DD format
+        max_pages: Maximum number of pages to fetch (default 10)
+
+    Returns:
+        dict: The Daily Insights chat object, or None if not found
+    """
+    if not API_KEY:
+        print("Error: LIMITLESS_API_KEY not found in environment variables.")
+        return None
+
+    endpoint = f"{API_URL}/v1/chats"
+    headers = {
+        "X-API-Key": API_KEY,
+        "Accept": "application/json"
+    }
+
+    # Parse target date to compare
+    target_dt = datetime.strptime(target_date, "%Y-%m-%d").date()
+
+    cursor = None
+    pages_fetched = 0
+
+    print(f"Searching for Daily Insights for {target_date}...")
+
+    while pages_fetched < max_pages:
+        params = {
+            "limit": 10,
+            "includeMarkdown": "true"
+        }
+
+        if cursor:
+            params["cursor"] = cursor
+
+        # Make API request with retries
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = requests.get(endpoint, headers=headers, params=params, timeout=30)
+                response.raise_for_status()
+                data = response.json()
+                break
+            except requests.exceptions.RequestException as e:
+                if attempt < MAX_RETRIES - 1:
+                    print(f"  Request failed (attempt {attempt + 1}/{MAX_RETRIES}): {e}")
+                    print(f"  Retrying in {RETRY_DELAY} seconds...")
+                    time.sleep(RETRY_DELAY)
+                else:
+                    print(f"  Failed after {MAX_RETRIES} attempts: {e}")
+                    return None
+
+        # Search through chats for Daily Insights matching the date
+        chats = data.get("data", {}).get("chats", [])
+
+        for chat in chats:
+            # Check if this is a Daily Insights chat
+            if chat.get("summary") == "Daily insights":
+                # Parse the creation date
+                created_at = chat.get("createdAt", "")
+                if created_at:
+                    chat_date = datetime.fromisoformat(created_at.replace('Z', '+00:00')).date()
+
+                    # Check if this matches our target date (within 1 day tolerance)
+                    date_diff = abs((chat_date - target_dt).days)
+                    if date_diff <= 1:
+                        print(f"✅ Found Daily Insights (created {chat_date})")
+                        return chat
+
+        # Check for next page
+        next_cursor = data.get("meta", {}).get("chats", {}).get("nextCursor")
+        if not next_cursor:
+            print(f"  Reached end of available chats (searched {pages_fetched + 1} pages)")
+            break
+
+        cursor = next_cursor
+        pages_fetched += 1
+        print(f"  Searched page {pages_fetched}, continuing...")
+
+        # Brief delay to respect rate limits
+        time.sleep(0.5)
+
+    print(f"❌ Daily Insights not found for {target_date}")
+    return None
+
+
+def extract_insights_text(chat):
+    """
+    Extract the Daily Insights text from the chat messages.
+
+    Args:
+        chat: The chat object containing messages
+
+    Returns:
+        str: The Daily Insights markdown text
+    """
+    messages = chat.get("messages", [])
+
+    # The Daily Insights is typically the assistant's response (second message)
+    for message in messages:
+        user = message.get("user", {})
+        if user.get("role") == "assistant":
+            return message.get("text", "")
+
+    return ""
+
+
+def save_insights(insights_text, target_date, output_dir):
+    """
+    Save Daily Insights to a markdown file.
+
+    Args:
+        insights_text: The markdown text of the insights
+        target_date: Date string in YYYY-MM-DD format
+        output_dir: Directory to save the file
+
+    Returns:
+        str: Path to the saved file
+    """
+    output_path = output_dir / f"{target_date}-daily-insights.md"
+
+    # Add a header with metadata
+    header = f"""# Daily Insights for {target_date}
+
+*Generated by Limitless AI*
+
+---
+
+"""
+
+    full_content = header + insights_text
+
+    with open(output_path, 'w', encoding='utf-8') as f:
+        f.write(full_content)
+
+    return output_path
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: python export_daily_insights.py YYYY-MM-DD")
+        print("Example: python export_daily_insights.py 2025-11-20")
+        sys.exit(1)
+
+    target_date = sys.argv[1]
+
+    # Validate date format
+    try:
+        datetime.strptime(target_date, "%Y-%m-%d")
+    except ValueError:
+        print(f"Error: Invalid date format '{target_date}'. Use YYYY-MM-DD")
+        sys.exit(1)
+
+    # Create output directory
+    output_dir = Path(__file__).parent.parent / "exports" / "insights"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Fetch Daily Insights
+    chat = fetch_daily_insights(target_date)
+
+    if not chat:
+        print(f"\nNo Daily Insights found for {target_date}")
+        print("Note: Daily Insights are typically generated the day after the activity.")
+        sys.exit(1)
+
+    # Extract insights text
+    insights_text = extract_insights_text(chat)
+
+    if not insights_text:
+        print(f"Error: Could not extract insights text from chat")
+        sys.exit(1)
+
+    # Save to file
+    output_path = save_insights(insights_text, target_date, output_dir)
+
+    print(f"\n✅ Daily Insights saved to: {output_path}")
+    print(f"   File size: {output_path.stat().st_size:,} bytes")
+
+
+if __name__ == "__main__":
+    main()
+
