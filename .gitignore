@@ -16,6 +16,14 @@ exports/
 *.wav
 *.mp3
 
+# Documentation with personal information
+# These guides contain personal file paths and specific details
+docs/CHAT_ANALYSIS_GUIDE.md
+docs/COMPLETE_GUIDE.md
+docs/EXPLORING_CHATS_ENDPOINT.md
+docs/OBSIDIAN_GUIDE.md
+docs/SYNC_GUIDE.md
+
 # IDE and editor files
 .vscode/
 .idea/
