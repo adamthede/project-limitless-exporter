@@ -216,3 +216,7 @@ MIT License - See [LICENSE](LICENSE) for details
 This is a community-maintained tool and is not officially affiliated with or endorsed by Limitless AI or Meta. Use at your own discretion. The authors are not responsible for any data loss or issues arising from the use of this software.
 
 Always verify your backups before deleting data from any service.
+
+## Project Context
+
+<img width="627" height="1521" alt="Screenshot 2025-12-07 at 8 32 46 AM" src="https://github.com/user-attachments/assets/8b1fbcfb-b580-4bee-acdb-1028cb6af316" />
