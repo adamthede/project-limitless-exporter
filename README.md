@@ -221,4 +221,5 @@ Always verify your backups before deleting data from any service.
 
 <img width="627" height="1521" alt="Screenshot 2025-12-07 at 8 32 46 AM" src="https://github.com/user-attachments/assets/8b1fbcfb-b580-4bee-acdb-1028cb6af316" />
 <img width="601" height="1882" alt="Screenshot 2025-12-07 at 8 34 23 AM" src="https://github.com/user-attachments/assets/6e7474d1-c91a-448e-bb47-c6a0f58623db" />
+<img width="546" height="560" alt="Screenshot 2025-12-07 at 8 42 04 AM" src="https://github.com/user-attachments/assets/61369f20-39ab-4dae-9e84-eee31d1fe0b1" />
 
